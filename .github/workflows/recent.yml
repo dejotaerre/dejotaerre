@@ -1,0 +1,33 @@
+name: Actualizar proyectos recientes
+on:
+  schedule:
+    - cron: '23 12 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/update_recent.py
+      - .github/workflows/recent.yml
+permissions:
+  contents: write
+concurrency:
+  group: proyectos-recientes
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Actualizar lista
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/update_recent.py
+      - name: Guardar cambios
+        run: |
+          if ! git diff --quiet -- README.md; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add README.md
+            git commit -m 'Actualizar proyectos recientes'
+            git push
+          fi
